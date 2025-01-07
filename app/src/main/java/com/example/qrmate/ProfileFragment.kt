@@ -7,12 +7,12 @@ import android.net.ConnectivityManager
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import com.example.qrmate.DAO.QRDatabase
 import com.example.qrmate.databinding.FragmentProfileBinding
@@ -124,7 +124,7 @@ class ProfileFragment : Fragment() {
 
     private fun fetchQRCodeFromLocalStorage(userId: String, onResult: (List<QRCode>) -> Unit) {
 
-        lifecycleScope(Dispatchers.IO).launch {
+        CoroutineScope(Dispatchers.IO).launch {
             val db = QRDatabase.getDatabase(requireContext())
             val localQRCodes = db.qrCodeDao().getAllQRCodes(userId)
 
@@ -152,51 +152,57 @@ class ProfileFragment : Fragment() {
         val combinedList = mutableListOf<QRCode>()
         val nameSet = mutableListOf<String>()
 
-        CoroutineScope(Dispatchers.IO).launch {
-            firebaseQRCodes.forEach { qrCode ->
-                if (!nameSet.contains(qrCode.name)) {
 
-                    combinedList.add(qrCode)
-                    nameSet.add(qrCode.name)
+        firebaseQRCodes.forEach { qrCode ->
+            if (!nameSet.contains(qrCode.name)) {
 
-                }
+                combinedList.add(qrCode)
+                nameSet.add(qrCode.name)
 
             }
-
-            localQRCodes.forEach { qrCode ->
-
-                if (!nameSet.contains(qrCode.name)) {
-                    combinedList.add(qrCode)
-                    nameSet.add(qrCode.name)
-                }
-
-            }
-
 
         }
+
+        localQRCodes.forEach { qrCode ->
+
+            if (!nameSet.contains(qrCode.name)) {
+                combinedList.add(qrCode)
+                nameSet.add(qrCode.name)
+            }
+
+        }
+
+
+
+
+        Log.d("Combined List", combinedList.size.toString())
         return combinedList
     }
 
 
-    private fun displayQRCodes(context: Context){
+    private fun displayQRCodes(context: Context) {
         val userId = FirebaseAuth.getInstance().currentUser?.uid
 
-        if(userId == null){
+        if (userId == null) {
             binding.tvNoQRCodes.visibility = View.VISIBLE
             binding.progressBar.visibility = View.GONE
             return
         }
 
         lifecycleScope.launch {
-            if(isInternetAvailable(requireContext())){
-                fetchQRCodesFromFirebase(userId){firebaseQRCodes ->
-                    fetchQRCodeFromLocalStorage(FirebaseAuth.getInstance().currentUser?.email!!.substringBefore("@")) { localQRCodes ->
+            if (isInternetAvailable(requireContext())) {
+                fetchQRCodesFromFirebase(userId) { firebaseQRCodes ->
+                    fetchQRCodeFromLocalStorage(
+                        FirebaseAuth.getInstance().currentUser?.email!!.substringBefore(
+                            "@"
+                        )
+                    ) { localQRCodes ->
                         val combinedQRCodes = combineAndFilterQRCodes(firebaseQRCodes, localQRCodes)
 
-                        if(combinedQRCodes.isEmpty()){
+                        if (combinedQRCodes.isEmpty()) {
                             binding.tvNoQRCodes.visibility = View.VISIBLE
                             binding.progressBar.visibility = View.GONE
-                        }else{
+                        } else {
                             binding.tvNoQRCodes.visibility = View.GONE
                             binding.rvQRCodes.adapter = QRCodeAdapter(combinedQRCodes)
                             binding.rvQRCodes.visibility = View.VISIBLE
@@ -205,12 +211,16 @@ class ProfileFragment : Fragment() {
 
                     }
                 }
-            }else{
-                fetchQRCodeFromLocalStorage(FirebaseAuth.getInstance().currentUser?.email!!.substringBefore("@")) {localQRCodes ->
-                    if(localQRCodes.isEmpty()){
+            } else {
+                fetchQRCodeFromLocalStorage(
+                    FirebaseAuth.getInstance().currentUser?.email!!.substringBefore(
+                        "@"
+                    )
+                ) { localQRCodes ->
+                    if (localQRCodes.isEmpty()) {
                         binding.tvNoQRCodes.visibility = View.VISIBLE
                         binding.progressBar.visibility = View.GONE
-                    }else{
+                    } else {
                         binding.tvNoQRCodes.visibility = View.GONE
                         binding.rvQRCodes.adapter = QRCodeAdapter(localQRCodes)
                         binding.rvQRCodes.visibility = View.VISIBLE
@@ -222,8 +232,6 @@ class ProfileFragment : Fragment() {
         }
 
     }
-
-
 
 
 }

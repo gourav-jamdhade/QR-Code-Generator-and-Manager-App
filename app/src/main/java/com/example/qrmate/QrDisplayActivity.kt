@@ -60,7 +60,7 @@ class QrDisplayActivity : AppCompatActivity() {
         var isSaved = false
         binding.btnSave.setOnClickListener {
 
-            if(isSaved){
+            if (isSaved) {
                 // Ignore the click if a save operation is already in progress
                 return@setOnClickListener
             }
@@ -73,18 +73,36 @@ class QrDisplayActivity : AppCompatActivity() {
                 }
             } else {
                 // For Android 10 and below, request WRITE_EXTERNAL_STORAGE
-                if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                    ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE), 1)
+                if (ContextCompat.checkSelfPermission(
+                        this,
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE
+                    ) != PackageManager.PERMISSION_GRANTED
+                ) {
+                    ActivityCompat.requestPermissions(
+                        this,
+                        arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
+                        1
+                    )
                 }
             }
 
-            saveToRoomDB(this, qrBitmap, text, qrDatabase, userId = FirebaseAuth.getInstance().currentUser?.email?.substringBefore("@") ?: "")
+            saveToRoomDB(
+                this,
+                qrBitmap,
+                text,
+                qrDatabase,
+                userId = FirebaseAuth.getInstance().currentUser?.email?.substringBefore("@") ?: ""
+            )
 
-            if(isInternetAvailable(this)){
+            if (isInternetAvailable(this)) {
                 saveToFirebase(this, qrBitmap!!, text!!, currentTime)
 
-            }else{
-                Toast.makeText(this, "No internet connection. Please check your connection and try again.", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(
+                    this,
+                    "No internet connection. Please check your connection and try again.",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
 
 
@@ -99,7 +117,10 @@ class QrDisplayActivity : AppCompatActivity() {
     private fun shareQRCode(context: Context, qrBitmap: Bitmap?) {
         try {
             // Save the bitmap to a file in external storage
-            val file = File(context.getExternalFilesDir(Environment.DIRECTORY_PICTURES), "shared_qr_code.png")
+            val file = File(
+                context.getExternalFilesDir(Environment.DIRECTORY_PICTURES),
+                "shared_qr_code.png"
+            )
             val fileOutputStream = FileOutputStream(file)
             qrBitmap?.compress(Bitmap.CompressFormat.PNG, 100, fileOutputStream)
             fileOutputStream.flush()
@@ -126,7 +147,12 @@ class QrDisplayActivity : AppCompatActivity() {
         }
     }
 
-    private fun saveToFirebase(context: Context, qrBitmap: Bitmap, text: String, currentTime: Long) {
+    private fun saveToFirebase(
+        context: Context,
+        qrBitmap: Bitmap,
+        text: String,
+        currentTime: Long
+    ) {
 
 
         // Get the current user from Firebase Auth
@@ -139,7 +165,7 @@ class QrDisplayActivity : AppCompatActivity() {
             return
         }
 
-        runOnUiThread{
+        runOnUiThread {
             binding.progressBar.visibility = View.VISIBLE
             binding.tvSave.visibility = View.VISIBLE
         }
@@ -181,16 +207,24 @@ class QrDisplayActivity : AppCompatActivity() {
 
                 // Push the data to the user's specific node in Realtime Database
                 userRef.push().setValue(qrCodeData).addOnCompleteListener { task ->
-                    runOnUiThread{
+                    runOnUiThread {
                         binding.progressBar.visibility = View.GONE
                         binding.tvSave.visibility = View.GONE
                     }
                     if (task.isSuccessful) {
 
-                        Toast.makeText(context, "QR Code saved to Firebase successfully.", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            context,
+                            "QR Code saved to Firebase successfully.",
+                            Toast.LENGTH_SHORT
+                        ).show()
                         Log.d("Firebase_Save", "QR Code saved successfully under user ID: $userId")
                     } else {
-                        Toast.makeText(context, "Failed to save QR Code to Firebase.", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            context,
+                            "Failed to save QR Code to Firebase.",
+                            Toast.LENGTH_SHORT
+                        ).show()
                         Log.e("Firebase_Save", "Error saving QR Code: ${task.exception?.message}")
                     }
 
@@ -198,21 +232,29 @@ class QrDisplayActivity : AppCompatActivity() {
                 }
             }.addOnFailureListener { e ->
                 // Handle failure in getting the download URL
-                Toast.makeText(context, "Failed to get download URL: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    context,
+                    "Failed to get download URL: ${e.message}",
+                    Toast.LENGTH_SHORT
+                ).show()
                 Log.e("Firebase_Save", "Error getting download URL: ${e.message}")
             }
         }.addOnFailureListener { e ->
             // Handle failure in uploading the image
-            Toast.makeText(context, "Failed to upload QR Code image: ${e.message}", Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                context,
+                "Failed to upload QR Code image: ${e.message}",
+                Toast.LENGTH_SHORT
+            ).show()
             Log.e("Firebase_Save", "Error uploading image: ${e.message}")
         }
-
 
 
     }
 
     private fun isInternetAvailable(context: Context): Boolean {
-        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val connectivityManager =
+            context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val activeNetwork: NetworkInfo? = connectivityManager.activeNetworkInfo
         return activeNetwork?.isConnected == true
     }
@@ -237,7 +279,7 @@ class QrDisplayActivity : AppCompatActivity() {
 
         // Get user ID from the current logged-in user (Google Sign-In ID)
         val userEmail = currentUser.email
-        val userParts = userEmail?.substringBefore("@")?:"unknown_user"
+        val userParts = userEmail?.substringBefore("@") ?: "unknown_user"
         // Get the current time
         val currentTime = System.currentTimeMillis()
 
@@ -251,8 +293,16 @@ class QrDisplayActivity : AppCompatActivity() {
         }
 
 // Request permissions
-        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.WRITE_EXTERNAL_STORAGE), 1)
+        if (ContextCompat.checkSelfPermission(
+                this,
+                android.Manifest.permission.WRITE_EXTERNAL_STORAGE
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(android.Manifest.permission.WRITE_EXTERNAL_STORAGE),
+                1
+            )
         }
 
 
