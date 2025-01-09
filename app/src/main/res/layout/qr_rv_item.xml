@@ -16,6 +16,8 @@
         <ImageView
             android:id="@+id/ivQRImage"
             android:layout_width="150dp"
+            android:padding="5dp"
+            android:src="@drawable/about_icon"
             android:layout_height="150dp"/>
 
         <LinearLayout
